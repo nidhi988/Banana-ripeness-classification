@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[ ]:
+
+
+from __future__ import division, print_function
+import sys
+import os
+import glob
+import re
+import numpy as np
+
+
+# In[ ]:
+
+
+from keras.applications.imagenet_utils import preprocess_input, decode_predictions
+from keras.models import load_models
+from keras.preprocessing import image
+
+
+# In[ ]:
+
+
+from flask import Flask, redirect, url_for, request, render_template
+from werkzeug.utils import secure_filename
+from gevent.pywsgi import WSGIServer
+
+
+# In[ ]:
+
+
+#define a flask app
+app=Flask(__name__)
+#model saved with keras model.save()
+MODEL_PATH='models/model.json'
+
+
+# In[ ]:
+
+
+def model_predict(img_path,model):
+    img=image.load_img(img_path,target_size=(224,224))
+    x=image.img_to_array(img)
+    x=np.expand_dims(x,axis=0)
+    x=preprocess_input(x,mode='caffe')
+    preds=model.predict(x)
+    return preds
+@app.route('/',methods=['GET'])
+def index():
+    return render_template("index.html")
+@app.route('/predict',methods=['GET','POST'])
+def upload():
+    if request.method=='POST':
+        f=request.files['files']
+        basepath=os.path.dirname(__file__)
+        file_Path=os.path.join(basepath,'uploads',secure_filename(f.filename))
+        f.save(file_Path)
+        preds=model_predict(file_Path,model)
+        pred_class=decode_predictions(preds,top=1)
+        result=str(pred_class[0][0][1])
+        return result
+    return None
+if __name__='__main__':
+    app.run(debug=True)
+    
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
